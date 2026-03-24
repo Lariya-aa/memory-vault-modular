@@ -44,25 +44,26 @@ Mac A (Claude/Gemini/Antigravity)     Mac B (Claude/Gemini/Codex)
 | Android (Termux) | `bash core/termux-setup.sh` | cronie / 手动 |
 | Windows | WSL2 (按 Linux 部署) | cron in WSL |
 
-## 蒸馏管线
+## 蒸馏管线与防溢出护城河 (3-Layer Protection)
 
 ```
 harvest      收割各工具记忆和对话 (全归 _global)
     ↓
 L0           Gemini CLI 从对话中提取 decision/preference/knowledge
+             [Layer 1 源头限流] 动态抛弃无效调试日志，每轮限提取 0-5 条关键事实。
     ↓
 L1           纯 Python 去重 + 格式标准化
     ↓
 L1.5         Gemini CLI 按内容自动分类到项目 (不需要预先注册项目)
-(classify)   自动发现新项目主题，首次全归 _global，后续越跑越准
+(classify)   自动发现新项目主题，提高并确立项目成立阈值，解决项目碎片化。
     ↓
 L2           Gemini CLI 按项目跨工具语义合并
-             识别 "JWT middleware" = "auth refactor" 是同一件事
+             [Layer 2 预算淘汰] 强制引入 $BUDGET 机制。按照优先级 (Decision > Todo) 自动压缩/抛弃低权记忆。
     ↓
 L3           Gemini CLI 全局蒸馏 + 按项目精炼
-             unified.md (全局) + projects/{name}.md (每个项目)
     ↓
 writeback    蒸馏结果 → 各工具原生格式 → 各机器 pull 后自动注入
+             [Layer 3 安全兜底] 回写终点执行极限截断 (budget_truncate)，根绝任何工具的 Context 撑爆风险。
 ```
 
 ## jj 在工作流中的作用
@@ -84,10 +85,10 @@ writeback    蒸馏结果 → 各工具原生格式 → 各机器 pull 后自动
 ```
 memory-vault-modular/
 │
-├── wizard.sh                              交互式安装向导 (新机器一键部署)
-├── .gitlab-ci.yml                         CI 管线 (6阶段: L0→L1→classify→L2→L3→writeback)
-├── .gitignore                             Git 忽略规则
-├── projects.json                          项目注册表 (运行时生成/更新)
+├── wizard.sh                              交互式管控终端 (1.部署新机器环境 2.将核心增量安全 Sync 给私库)
+├── .gitlab-ci.example.yml                 CI 管线模板 (6阶段全自动，已抽离私密通信 IP)
+├── .gitignore                             强一致隔离规则 (屏蔽提交个人私有日志和运行配仓)
+├── projects.example.json                  项目注册表模板
 │
 ├── core/                                  核心层 (所有模块依赖)
 │   ├── jj-utils.sh                        jj 工具函数库
@@ -105,9 +106,9 @@ memory-vault-modular/
 │   ├── setup.sh                           非交互式安装 (wizard 的底层实现)
 │   └── termux-setup.sh                    Android Termux 专用安装脚本
 │
-├── config/                                配置文件
-│   ├── modules.json                       模块启用/禁用开关
-│   └── machines.json                      机器配置 (Antigravity 搜索路径等)
+├── config/                                配置文件模板
+│   ├── modules.example.json               模块启用/禁用开关示例
+│   └── machines.example.json              机器配置示例 (Antigravity 搜索路径等)
 │
 ├── configs/                               工具配置同步 (运行时生成)
 │   └── _templates/                        配置模板 (一次编辑，全平台生效)
@@ -226,16 +227,16 @@ bash wizard.sh
 # 自动从 vault 拉取配置模板并注入本地工具
 ```
 
-### 源码修改后同步到仓库
+### 源码更新后同步到私有 Vault
+
+如果您在此开源模块库 (`memory-vault-modular`) 中修改了代码功能，想要同步给您个人的正式运行仓，请直接运行：
 
 ```bash
-cd ~/memory-vault && \
-  cp -r ~/AI-local/memory-vault-modular/core/* core/ && \
-  cp -r ~/AI-local/memory-vault-modular/modules/* modules/ && \
-  cp -r ~/AI-local/memory-vault-modular/config/* config/ && \
-  cp ~/AI-local/memory-vault-modular/.gitlab-ci.yml . && \
-  chmod +x core/*.sh modules/*/run.sh modules/*/*.sh 2>/dev/null
+bash wizard.sh
+# 并在交互菜单中选择 [2] 仅同步更新代码 (Source Code Sync)
 ```
+
+向导将通过安全增量的 `rsync` 自动把核心逻辑刷入您最终部署的仓库，**环境配置 JSON、个人私有记忆体、部署后的流水线 YAML** 均会自动跳过保护，绝不覆写。
 
 ## 文档
 
