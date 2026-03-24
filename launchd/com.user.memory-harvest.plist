@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.user.memory-harvest</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/yaya/memory-vault/scripts/harvest.sh</string>
+  </array>
+
+  <!-- 每 1800 秒 (30 分钟) 运行一次 -->
+  <key>StartInterval</key>
+  <integer>1800</integer>
+
+  <!-- 开机后立即运行一次 -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/memory-harvest.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/memory-harvest.err</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+    <key>MEMORY_VAULT</key>
+    <string>/Users/yaya/memory-vault</string>
+    <key>HOME</key>
+    <string>/Users/yaya</string>
+  </dict>
+</dict>
+</plist>

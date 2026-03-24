@@ -1,0 +1,1 @@
+{"name": "harvest", "description": "收割各工具记忆和对话，按项目归档", "stage": "pipeline", "order": 0, "depends": []}

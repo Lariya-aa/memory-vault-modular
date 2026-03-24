@@ -1,0 +1,1 @@
+{"name": "distill-l3", "description": "Gemini CLI 全局 + 按项目蒸馏", "stage": "pipeline", "order": 4, "depends": ["distill-l2"]}

@@ -1,0 +1,1 @@
+{"name": "distill-l0", "description": "对话蒸馏: 提取可复用知识", "stage": "pipeline", "order": 1, "depends": ["harvest"]}

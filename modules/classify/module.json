@@ -1,0 +1,1 @@
+{"name": "classify", "description": "LLM 按内容自动分类到项目 (L1.5)", "stage": "pipeline", "order": 2.5, "depends": ["distill-l1"]}

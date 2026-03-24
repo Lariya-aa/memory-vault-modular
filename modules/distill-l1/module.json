@@ -1,0 +1,1 @@
+{"name": "distill-l1", "description": "去重 + 按项目分组 (消费 L0 + raw)", "stage": "pipeline", "order": 2, "depends": ["distill-l0"]}

@@ -1,0 +1,1 @@
+{"name": "sync-config", "description": "同步工具定义/配置文件 (SOUL/CLAUDE.md等)", "stage": "independent", "order": -1, "depends": []}

@@ -1,0 +1,24 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.tmp
+*.swp
+.last-harvest
+
+# Logs
+/tmp/
+*.log
+*.err
+
+# Ignore personal memory data and vault runtime state
+raw/
+conversations/
+distilled/
+writeback/
+projects.json
+config/machines.json
+
+# Keep config templates
+!config/*.example.json

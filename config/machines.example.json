@@ -1,0 +1,12 @@
+{
+  "_comment": "按机器配置，覆盖默认值",
+  "defaults": {
+    "antigravity_roots": ["~/projects", "~/Developer", "~/code"],
+    "harvest_interval_minutes": 30
+  },
+  "machines": {
+    "example-machine-name": {
+      "antigravity_roots": ["/custom/path/to/projects"]
+    }
+  }
+}

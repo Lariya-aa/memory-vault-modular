@@ -1,0 +1,108 @@
+stages:
+  - distill-l0
+  - distill-l1
+  - classify
+  - distill-l2
+  - distill-l3
+  - writeback
+
+variables:
+  GIT_STRATEGY: clone
+  VAULT_ROOT: $CI_PROJECT_DIR
+
+l0-conversations:
+  stage: distill-l0
+  tags: [ubuntu-runner]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+  script:
+    - jj git init --colocate 2>/dev/null || true
+    - jj git fetch --all-remotes
+    - export VAULT_ROOT=$CI_PROJECT_DIR MODULE_NAME=distill-l0 MODULE_DIR=$CI_PROJECT_DIR/modules/distill-l0
+    - bash modules/distill-l0/run.sh
+  artifacts:
+    paths: [distilled/L0/]
+    expire_in: 7 days
+
+l1-dedup:
+  stage: distill-l1
+  tags: [ubuntu-runner]
+  needs: [l0-conversations]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+  script:
+    - jj git init --colocate 2>/dev/null || true
+    - jj git fetch --all-remotes
+    - export VAULT_ROOT=$CI_PROJECT_DIR MODULE_NAME=distill-l1 MODULE_DIR=$CI_PROJECT_DIR/modules/distill-l1
+    - bash modules/distill-l1/run.sh
+  artifacts:
+    paths: [distilled/L1/]
+    expire_in: 7 days
+
+classify:
+  stage: classify
+  tags: [ubuntu-runner]
+  needs: [l1-dedup]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+  script:
+    - jj git init --colocate 2>/dev/null || true
+    - export VAULT_ROOT=$CI_PROJECT_DIR MODULE_NAME=classify MODULE_DIR=$CI_PROJECT_DIR/modules/classify
+    - bash modules/classify/run.sh
+  artifacts:
+    paths: [distilled/L1/, projects.json]
+    expire_in: 7 days
+
+l2-cross-tool:
+  stage: distill-l2
+  tags: [ubuntu-runner]
+  needs: [classify]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+  script:
+    - jj git init --colocate 2>/dev/null || true
+    - export VAULT_ROOT=$CI_PROJECT_DIR MODULE_NAME=distill-l2 MODULE_DIR=$CI_PROJECT_DIR/modules/distill-l2
+    - bash modules/distill-l2/run.sh
+  artifacts:
+    paths: [distilled/L2/]
+    expire_in: 30 days
+
+l3-project:
+  stage: distill-l3
+  tags: [ubuntu-runner]
+  needs: [l2-cross-tool]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+  script:
+    - jj git init --colocate 2>/dev/null || true
+    - export VAULT_ROOT=$CI_PROJECT_DIR MODULE_NAME=distill-l3 MODULE_DIR=$CI_PROJECT_DIR/modules/distill-l3
+    - bash modules/distill-l3/run.sh
+  artifacts:
+    paths: [distilled/L3/]
+    expire_in: 90 days
+
+writeback:
+  stage: writeback
+  tags: [ubuntu-runner]
+  needs: [l2-cross-tool, l3-project]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+  script:
+    # 配置 SSH push (deploy key 需勾选 Write access)
+    - |
+      export GIT_SSH_COMMAND="ssh -i /home/gitlab-runner/.ssh/id_ed25519_runner -o StrictHostKeyChecking=no"
+      mkdir -p ~/.ssh && chmod 700 ~/.ssh
+      # Replace placeholders with GitLab CI/CD environment variables
+      ssh-keyscan -p ${GITLAB_SSH_PORT:-22} ${GITLAB_SSH_HOST:-gitlab.example.com} >> ~/.ssh/known_hosts 2>/dev/null || true
+      git remote set-url origin ssh://git@${GITLAB_SSH_HOST:-gitlab.example.com}:${GITLAB_SSH_PORT:-22}/${CI_PROJECT_PATH}.git || true
+      git config core.sshCommand "ssh -i /home/gitlab-runner/.ssh/id_ed25519_runner -o StrictHostKeyChecking=no"
+    - jj git init --colocate 2>/dev/null || true
+    - jj git fetch --all-remotes
+    - export VAULT_ROOT=$CI_PROJECT_DIR MODULE_NAME=writeback MODULE_DIR=$CI_PROJECT_DIR/modules/writeback
+    - bash modules/writeback/run.sh

@@ -1,0 +1,11 @@
+{
+  "harvest":      { "enabled": true,  "description": "收割各工具记忆和对话" },
+  "distill-l0":   { "enabled": true,  "description": "对话蒸馏 (Gemini CLI)" },
+  "distill-l1":   { "enabled": true,  "description": "去重 + 按项目分组" },
+  "classify":     { "enabled": true,  "description": "按内容自动分类到项目 (L1.5)" },
+  "distill-l2":   { "enabled": true,  "description": "跨工具语义合并 (Gemini CLI)" },
+  "distill-l3":   { "enabled": true,  "description": "全局项目级蒸馏 (Gemini CLI)" },
+  "writeback":    { "enabled": true,  "description": "回写各工具原生格式" },
+  "sync-config":  { "enabled": true,  "description": "同步定义/配置文件" },
+  "admin":        { "enabled": true,  "description": "jj 管理工具" }
+}

@@ -1,0 +1,1 @@
+{"name": "distill-l2", "description": "Gemini CLI 跨工具语义合并", "stage": "pipeline", "order": 3, "depends": ["distill-l1"]}
