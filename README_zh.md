@@ -48,6 +48,8 @@ Mac A (Claude/Gemini/Antigravity)     Mac B (Claude/Gemini/Codex)
 | Android (Termux) | `bash core/termux-setup.sh` | cronie / 手动 |
 | Windows | WSL2 (按 Linux 部署) | cron in WSL |
 
+> 💡 **纯局域网/私有云源生支持**: 完美匹配通过 `file:///mnt/nas/...` 将本地/网络映射盘挂载为系统枢纽的特种作业。无需外部 GitLab 也可以倚靠本机局域网资源，打造零公网痕迹的纯内网大模型聚合蜂巢。
+
 ## 蒸馏管线与防溢出护城河 (3-Layer Protection)
 
 ```

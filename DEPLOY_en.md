@@ -40,6 +40,22 @@ Memory Vault ships with an extremely decoupled orchestrator script: `wizard.sh`.
 
 ---
 
+## Pure LAN / NAS Deployment (100% Air-Gapped)
+
+If you demand absolute data privacy and strictly wish to bypass cloud hosted instances like GitLab entirely, you can securely host the centralized synchronization pipeline utilizing a basic local NAS (via SMB/NFS). Combined heavily with Wizard Option [4], this strategy unlocks a fully air-gapped, zero-latency local fusion reactor.
+
+1. **Initialize the Local Origin (Bare Repo)**
+   Inside your centrally mounted NAS folder, establish an unpopulated bare repository used purely as the synchronization nexus:
+   `git init --bare /mnt/nas/memory-vault.git`
+
+2. **Declare the Main Distillation Engine (Mac/Windows) → Select Mode [4]**
+   Select the most robust workstation in your fleet to accept API requests and heavy compute lifting. Run `bash wizard.sh` and pick Option `[4] Local Daemon Mode`. When prompted for the GitLab URL, safely paste your local absolute mount path (e.g., `file:///mnt/nas/memory-vault.git` or `Z:/memory-vault.git`). The wizard natively detects the topology and skips all external SSH telemetry automatically.
+
+3. **Configure Worker Nodes (Debian/Android) → Select Mode [1]**
+   On auxiliary clients, launch the wizard and choose `[1] Deploy & Repair`, passing the identical LAN path. These clients become lightweight ghosts—silently harvesting native AI logs per interval, dropping them into the local NAS queue, and retrieving the unified distilled knowledge processed asynchronously by your Main Engine.
+
+---
+
 ## Mac Deployment
 
 > Applies to: Dual-Mac setups interacting natively with Claude CLI, Gemini CLI, Antigravity, or Codex CLI.

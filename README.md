@@ -50,6 +50,8 @@ Mac A (Claude/Gemini/Antigravity)     Mac B (Claude/Gemini/Codex)
 | Android (Termux) | `bash core/termux-setup.sh` | cronie / Manual |
 | Windows | WSL2 (Same as Linux) | cron in WSL |
 
+> 💡 **Air-Gapped LAN & NAS Native Support**: Dynamically detects mapped network drives (`file:///...`) establishing them as the local central sync repository. Architecturally constructs a 100% offline, privacy-first synchronization hub bypassing cloud CI servers entirely.
+
 ## Distillation Pipeline & Anti-Overflow Protection (3-Layer)
 
 ```

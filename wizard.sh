@@ -241,35 +241,40 @@ if [ -z "$GITLAB_URL" ]; then
   fi
 fi
 
-# 测试 SSH 连接
-echo ""
-waiting "测试 SSH 连接..."
-HOST=$(echo "$GITLAB_URL" | sed 's/.*@//' | sed 's/:.*//')
-if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -T "git@$HOST" 2>&1 | grep -qi "welcome\|success\|authenticated"; then
-  info "SSH 连接: $HOST ✓"
-else
-  # SSH key 可能不存在
-  if [ ! -f "$HOME/.ssh/id_ed25519" ] && [ ! -f "$HOME/.ssh/id_rsa" ]; then
-    warn "未找到 SSH Key"
-    ask "是否生成新的 SSH Key?"
-    read -p "  [Y/n] " gen_key
-    if [ "${gen_key:-Y}" != "n" ] && [ "${gen_key:-Y}" != "N" ]; then
-      ssh-keygen -t ed25519 -C "memory-vault@$MACHINE" -f "$HOME/.ssh/id_ed25519" -N ""
-      echo ""
-      echo -e "  ${YELLOW}请将以下公钥添加到 GitLab:${NC}"
-      echo -e "  ${YELLOW}GitLab → User Settings → SSH Keys → Add Key${NC}"
-      echo ""
-      echo "  ┌─────────────────────────────────────────────────┐"
-      cat "$HOME/.ssh/id_ed25519.pub" | sed 's/^/  │ /'
-      echo "  └─────────────────────────────────────────────────┘"
-      echo ""
-      read -p "  添加完成后按 Enter 继续..."
-    fi
+# 测试 SSH 连接 (仅针对远端地址)
+if [[ "$GITLAB_URL" == *"@"* ]]; then
+  echo ""
+  waiting "测试 SSH 连接..."
+  HOST=$(echo "$GITLAB_URL" | sed 's/.*@//' | sed 's/:.*//')
+  if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -T "git@$HOST" 2>&1 | grep -qi "welcome\|success\|authenticated"; then
+    info "SSH 连接: $HOST ✓"
   else
-    warn "SSH 连接失败, 可能需要将公钥添加到 GitLab"
-    echo "  公钥: $(cat "$HOME/.ssh/id_ed25519.pub" 2>/dev/null || cat "$HOME/.ssh/id_rsa.pub" 2>/dev/null || echo '未找到')"
-    read -p "  按 Enter 继续 (或 Ctrl+C 退出修复后重试)..."
+    # SSH key 可能不存在
+    if [ ! -f "$HOME/.ssh/id_ed25519" ] && [ ! -f "$HOME/.ssh/id_rsa" ]; then
+      warn "未找到 SSH Key"
+      ask "是否生成新的 SSH Key?"
+      read -p "  [Y/n] " gen_key
+      if [ "${gen_key:-Y}" != "n" ] && [ "${gen_key:-Y}" != "N" ]; then
+        ssh-keygen -t ed25519 -C "memory-vault@$MACHINE" -f "$HOME/.ssh/id_ed25519" -N ""
+        echo ""
+        echo -e "  ${YELLOW}请将以下公钥添加到远端主机:${NC}"
+        echo ""
+        echo "  ┌─────────────────────────────────────────────────┐"
+        cat "$HOME/.ssh/id_ed25519.pub" | sed 's/^/  │ /'
+        echo "  └─────────────────────────────────────────────────┘"
+        echo ""
+        read -p "  添加完成后按 Enter 继续..."
+      fi
+    else
+      warn "SSH 连接失败, 可能需要将公钥添加到远端"
+      echo "  公钥: $(cat "$HOME/.ssh/id_ed25519.pub" 2>/dev/null || cat "$HOME/.ssh/id_rsa.pub" 2>/dev/null || echo '未找到')"
+      read -p "  按 Enter 继续 (或 Ctrl+C 退出修复后重试)..."
+    fi
   fi
+else
+  echo ""
+  info "检测到局域网/共享映射本地路径作为版本中心: $GITLAB_URL"
+  info "已为您自动跳过外网 SSH 测试 ✓"
 fi
 
 # ═══════════════════════════════════════════════

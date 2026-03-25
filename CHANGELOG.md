@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [0.4.0] - 2026-03-25
 
 ### Added
+- **LAN Bare Repo Capability**: The configuration wizard natively detects local or mapped network drives (e.g., `file:///mnt/nas`) and gracefully bypasses SSH checks, unlocking 100% offline NAS architectures.
 - **Wizard Option [3] Local Pipeline Run**: Bypasses 60-minute CI timeout limits to rapidly execute the L0-L3 distillation pipeline locally, ideal for heavy first-time history merges.
 - **Wizard Option [4] Local Daemon Mode**: Pure offline automated distillation architecture. Deploys a background daemon utilizing `flock` kernel mutexes to prevent race conditions on macOS/Linux.
 - **Internationalization**: Created full English deployment documentation (`DEPLOY_en.md`).
