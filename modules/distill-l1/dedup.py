@@ -12,7 +12,6 @@ import hashlib
 import json
 import os
 import subprocess
-import yaml
 from pathlib import Path
 from datetime import datetime
 
@@ -78,10 +77,11 @@ def parse_claude_memory(filepath: Path, change_id: str = "") -> list[dict]:
                  "content": text.strip(), "machine": filepath.parent.name,
                  "change_id": change_id}]
     parts = text.split("---", 2)
-    try:
-        meta = yaml.safe_load(parts[1])
-    except yaml.YAMLError:
-        meta = {}
+    meta = {}
+    for line in parts[1].splitlines():
+        if ":" in line:
+            k, v = line.split(":", 1)
+            meta[k.strip()] = v.strip().strip("'\"")
     return [{
         "source": "claude",
         "type": meta.get("type", "unknown"),

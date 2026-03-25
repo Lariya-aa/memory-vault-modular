@@ -1,0 +1,82 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1774424773832,
+  "projectRoot": "/Users/yaya/AI-local/memory-vault-modular",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "config": {
+      "path": "config",
+      "purpose": "Configuration files",
+      "fileCount": 3,
+      "lastAccessed": 1774424773826,
+      "keyFiles": [
+        "machines.example.json",
+        "machines.json",
+        "modules.json"
+      ]
+    },
+    "configs": {
+      "path": "configs",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1774424773826,
+      "keyFiles": []
+    },
+    "core": {
+      "path": "core",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1774424773826,
+      "keyFiles": [
+        "jj-utils.sh",
+        "module-loader.sh",
+        "project-register.sh",
+        "setup.sh",
+        "termux-setup.sh"
+      ]
+    },
+    "launchd": {
+      "path": "launchd",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1774424773826,
+      "keyFiles": [
+        "com.user.memory-harvest.plist"
+      ]
+    },
+    "modules": {
+      "path": "modules",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1774424773826,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

@@ -375,6 +375,13 @@ def main():
 
     sessions = []
     seen_keys = set()
+    
+    # 增量优化：获取所有已经成功蒸馏过的会话 ID，避免流水线重复消耗 Token
+    distilled_sids = set()
+    l0_base_dir = VAULT_ROOT / "distilled" / "L0"
+    if l0_base_dir.exists():
+        for f in l0_base_dir.rglob("_distilled/*.json"):
+            distilled_sids.add(f.stem)  # 格式为: {tool}-{machine}-{sid}
 
     # 遍历所有 conversations/ 下的文件
     for tool_dir in sorted(CONV_DIR.iterdir()) if CONV_DIR.exists() else []:
@@ -401,6 +408,12 @@ def main():
                 machine = parts[1] if len(parts) > 1 else "unknown"
                 session["machine"] = machine
 
+                # 检查是否已经被蒸馏过
+                sid = session["session_id"][:12]
+                export_name = f"{tool_name}-{machine}-{sid}"
+                if export_name in distilled_sids:
+                    continue
+
                 # 去重
                 key = dedup_key(session)
                 if key not in seen_keys:
@@ -418,6 +431,9 @@ def main():
             brain_dir = anti_dir / "_global" / "brain"
             for session in extract_antigravity_brain(brain_dir):
                 session["machine"] = machine
+                sid = session["session_id"][:12]
+                if f"antigravity-{machine}-{sid}" in distilled_sids:
+                    continue
                 key = dedup_key(session)
                 if key not in seen_keys:
                     seen_keys.add(key)
@@ -427,6 +443,9 @@ def main():
             knowledge_dir = anti_dir / "_global" / "knowledge"
             for session in extract_antigravity_knowledge(knowledge_dir):
                 session["machine"] = machine
+                sid = session["session_id"][:12]
+                if f"antigravity-{machine}-{sid}" in distilled_sids:
+                    continue
                 key = dedup_key(session)
                 if key not in seen_keys:
                     seen_keys.add(key)

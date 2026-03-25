@@ -140,29 +140,38 @@ for project_file in "$LATEST_L1"/*.json; do
     if [ -n "$CURRENT_SUMMARY" ]; then
       # ── 增量模式: 旧摘要 + 新条目 ──
       
-      # 检查旧摘要是否超预算
-      OLD_SIZE=$(wc -c <<< "$CURRENT_SUMMARY" | tr -d ' ' || echo 0)
+      # 检查旧摘要是否超预算 (改用字数计算)
+      OLD_SIZE=$(wc -m <<< "$CURRENT_SUMMARY" | tr -d ' ' || echo 0)
       if [ "$OLD_SIZE" -gt $((BUDGET * 3)) ]; then
-        echo "  WARNING: existing summary ${OLD_SIZE} chars exceeds 3x budget. Will be compressed."
+        echo "  WARNING: existing summary ${OLD_SIZE} chars exceeds 3x budget. Executing LLM semantic compression..."
+        COMPRESS_PROMPT=$(mktemp)
+        COMPRESS_OUT=$(mktemp)
+        
+        cat > "$COMPRESS_PROMPT" << COMP_PROMPT
+你是一个无损语义压缩引擎。
+现有的项目记忆总结已经过长，请你在不丢失重要事实（关键决策、架构约束、错误排查方案）的前提下，对其进行强制精简折叠。
+
+## 输出要求
+- 必须严格保留已有的 Markdown 标题架构
+- 合并相同或高度相似的知识，提炼高密度事实，删除口语化的描述和冗余说明
+- 务必保留每条最后的 [来源: xxx] 标注
+- 整个输出必须极度精简，压缩到 ${BUDGET} 字内。
+
+待压缩长文本：
+$CURRENT_SUMMARY
+COMP_PROMPT
+
+        # 调用 Gemini 进行智能压缩
+        if gemini_distill "$COMPRESS_PROMPT" "$COMPRESS_OUT"; then
+          CURRENT_SUMMARY=$(cat "$COMPRESS_OUT")
+          echo "  → Successfully compressed safely to $(wc -m <<< "$CURRENT_SUMMARY" | tr -d ' ') chars via LLM."
+        else
+          echo "  → Semantic compression failed, keeping original summary size."
+        fi
+        rm -f "$COMPRESS_PROMPT" "$COMPRESS_OUT"
       fi
 
-      # 简单的按章节截断，仅为了防止炸 prompt
-      TRIMMED_SUMMARY=$(python3 -c "
-text = open('/dev/stdin').read()
-if len(text) > $MAX_SUMMARY_LEN:
-    lines = text.split('\n')
-    result = []
-    kept = 0
-    for line in lines:
-        if line.startswith('## '):
-            result.append(line)
-            kept = 0
-        elif kept < 8:
-            result.append(line)
-            kept += 1
-    text = '\n'.join(result)
-print(text[:$MAX_SUMMARY_LEN])
-" <<< "$CURRENT_SUMMARY" 2>/dev/null || echo "$CURRENT_SUMMARY" | head -c $MAX_SUMMARY_LEN)
+      TRIMMED_SUMMARY="$CURRENT_SUMMARY"
 
       cat > "$PROMPT_FILE" << PROMPT
 你是一个增量记忆合并引擎。有严格的字数预算。
@@ -170,8 +179,8 @@ print(text[:$MAX_SUMMARY_LEN])
 项目: "$project"
 本批新增: $THIS_BATCH 条 (总共 $MEM_COUNT 条，第 $((BATCH + 1))/$TOTAL_BATCHES 批)
 
-## ⚠️ 字数预算: $BUDGET 字
-输出必须 ≤ $BUDGET 字。超出则压缩低优先级条目。
+## ⚠️ 字数预算: ${BUDGET} 字
+输出必须 ≤ ${BUDGET} 字。超出则压缩低优先级条目。
 
 ## 优先级 (从高到低,预算不足时从低优先级开始压缩)
 1. decision / solution — 绝不丢弃,最多压缩措辞
@@ -200,7 +209,7 @@ $NEW_ENTRIES
 ## 活跃待办
 ## 已归档
 
-只输出 Markdown。总字数 ≤ $BUDGET。
+只输出 Markdown。总字数 ≤ ${BUDGET}。
 PROMPT
 
     else
@@ -211,7 +220,7 @@ PROMPT
 项目: "$project"
 条目数: $THIS_BATCH 条 (第 $((BATCH + 1))/$TOTAL_BATCHES 批)
 
-## ⚠️ 字数预算: $BUDGET 字
+## ⚠️ 字数预算: ${BUDGET} 字
 
 以下是来自多个 AI 工具的记忆:
 $NEW_ENTRIES
@@ -230,7 +239,7 @@ $NEW_ENTRIES
 ## 项目知识
 ## 活跃待办
 
-只输出 Markdown。总字数 ≤ $BUDGET。
+只输出 Markdown。总字数 ≤ ${BUDGET}。
 PROMPT
     fi
 
