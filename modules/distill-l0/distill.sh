@@ -21,6 +21,11 @@ for session_file in "$LATEST_L0"/*.md; do
   [ -f "$session_file" ] || continue
   filename=$(basename "$session_file" .md)
 
+  # [跨端防御] 如果这份文件的 JSON 产物已经存在 (无论是自己生过还是兄弟机推过来的) 则直接跳过
+  if [ -f "$DISTILLED_DIR/$filename.json" ]; then
+    continue
+  fi
+
   CHAR_COUNT=$(wc -c < "$session_file" | tr -d ' ')
   if [ "$CHAR_COUNT" -lt 500 ]; then
     SKIPPED=$((SKIPPED + 1))
