@@ -109,7 +109,13 @@ if [ "$run_mode" = "2" ]; then
   rsync -av --delete --exclude='*.json' --exclude='*.example.*' --exclude='.git*' --exclude='.DS_Store' "$PROJECT_ROOT/modules/" "$VAULT/modules/" > /dev/null
   rsync -av --delete --exclude='.git*' "$PROJECT_ROOT/core/" "$VAULT/core/" > /dev/null
   
-  info "核心代码模块同步完成！您的个人私有数据、环境配置未受影响。"
+  # 附带同步管控向导与全部大本营文档
+  cp "$PROJECT_ROOT/wizard.sh" "$VAULT/" 2>/dev/null || true
+  cp "$PROJECT_ROOT/"*.md "$VAULT/" 2>/dev/null || true
+  cp -r "$PROJECT_ROOT/launchd" "$VAULT/" 2>/dev/null || true
+  chmod +x "$VAULT/wizard.sh" 2>/dev/null || true
+  
+  info "核心模块及全局文档同步完成！您的私有数据与 JSON 配置绝对安全。"
   exit 0
 fi
 
@@ -329,6 +335,11 @@ if [ ! -f "$VAULT/core/module-loader.sh" ]; then
     cp "$PROJECT_ROOT/.gitlab-ci.yml" "$VAULT/" 2>/dev/null || true
     cp "$PROJECT_ROOT/.gitignore" "$VAULT/" 2>/dev/null || true
     cp -r "$PROJECT_ROOT/launchd" "$VAULT/" 2>/dev/null || true
+    
+    # 附带部署向导自身说明文档
+    cp "$PROJECT_ROOT/wizard.sh" "$VAULT/" 2>/dev/null || true
+    cp "$PROJECT_ROOT/"*.md "$VAULT/" 2>/dev/null || true
+    
     chmod +x "$VAULT/core/"*.sh "$VAULT/modules/"*/run.sh 2>/dev/null || true
     chmod +x "$VAULT/modules/"*/*.sh 2>/dev/null || true
     info "项目文件已安装"
