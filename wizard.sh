@@ -83,8 +83,10 @@ echo ""
 echo -e "  请选择操作模式:"
 echo -e "  [1] ${CYAN}全新安装 / 完整修复 (Deploy & Repair)${NC}  - 初始化核心并在当前环境部署所有依赖"
 echo -e "  [2] ${GREEN}仅同步更新代码 (Source Code Sync)${NC}      - 仅将模块代码增量同步到私有 Vault (不改配置)"
+echo -e "  [3] ${YELLOW}本地跑满蒸馏管线 (Local Pipeline Run)${NC} - 绕过 CI 限制，本机极速执行 L0-L3 全流程"
+echo -e "  [4] ${BOLD}纯本地挂机模式 (Local Daemon Mode)${NC}   - 彻底无需云端跑管线，本机每 30分钟隐身常驻提纯"
 echo ""
-read -p "  [1/2] (默认 1): " run_mode
+read -p "  [1/2/3/4] (默认 1): " run_mode
 run_mode=${run_mode:-1}
 
 if [ "$run_mode" = "2" ]; then
@@ -108,6 +110,51 @@ if [ "$run_mode" = "2" ]; then
   rsync -av --delete --exclude='.git*' "$PROJECT_ROOT/core/" "$VAULT/core/" > /dev/null
   
   info "核心代码模块同步完成！您的个人私有数据、环境配置未受影响。"
+  exit 0
+fi
+
+if [ "$run_mode" = "3" ]; then
+  echo ""
+  step "本地极速执行 L0-L3 蒸馏全流程"
+  
+  if [ ! -f "$VAULT/core/module-loader.sh" ]; then
+    error "未检测到核心运行库 ($VAULT)。请先使用模式 [1] 初始化系统。"
+    exit 1
+  fi
+  
+  echo "  该模式将利用您本机的极速网络和算力直接跑完长达千字的初次记忆合并，"
+  echo "  完美绕过基于免费 CI 运行平台长达 60 分钟强制断网的 Timeout 限制。"
+  echo ""
+  waiting "即将按序挂载运行管线..."
+  echo ""
+  
+  export MEMORY_VAULT="$VAULT"
+  # 必须使用 bash subshell 或由 source 引发
+  source "$VAULT/core/module-loader.sh"
+  
+  echo -e "  ${CYAN}[1/7] 归档收集 (Harvest)${NC}"
+  run_module harvest
+  
+  echo -e "  ${CYAN}[2/7] L0 原始对话记忆提取 (Extract & Distill)${NC}"
+  run_module distill-l0
+  
+  echo -e "  ${CYAN}[3/7] L1 死数据去重去脏 (Dedup)${NC}"
+  run_module distill-l1
+  
+  echo -e "  ${CYAN}[4/7] L1.5 语义智能漂移分类 (Classify)${NC}"
+  run_module classify
+  
+  echo -e "  ${CYAN}[5/7] L2 跨端大模型语义合并 (Semantic Merge)${NC}"
+  run_module distill-l2
+  
+  echo -e "  ${CYAN}[6/7] L3 最终知识树提纯 (Global Refinement)${NC}"
+  run_module distill-l3
+  
+  echo -e "  ${CYAN}[7/7] Writeback 工具态回写装箱 (Writeback)${NC}"
+  run_module writeback
+  
+  echo ""
+  info "本地首航全管线执行完毕！您的所有 AI 记忆现在已经高压浓缩成了最纯粹的 Markdown 晶体并被 JJ PUSH 推送成功。"
   exit 0
 fi
 
@@ -363,7 +410,7 @@ fi
 step "配置定时收割"
 # ═══════════════════════════════════════════════
 
-echo "  定时任务每 30 分钟自动收割本机各工具的记忆和对话,"
+echo "  定时任务每 3 小时自动收割本机各工具的记忆和对话,"
 echo "  同步到 vault 并推送到 GitLab。"
 echo ""
 
@@ -375,30 +422,44 @@ case "$PLATFORM" in
       sed -e "s|/Users/yaya|$HOME|g" \
           -e "s|/Users/yaya/memory-vault|$VAULT|g" \
           "$PLIST_SRC" > "$PLIST_DST"
+          
+      if [ "$run_mode" = "4" ]; then
+        # Mac 本机挂机模式：将原本默认指向 harvest 的节点暴力倒转到 local-daemon 全局调度室
+        sed -i "" "s|modules/harvest/run.sh|modules/local-daemon/run.sh|g" "$PLIST_DST"
+      fi
+
       launchctl unload "$PLIST_DST" 2>/dev/null || true
       launchctl load "$PLIST_DST"
-      info "launchd: 每 30 分钟 ✓"
+      info "launchd: 每 3 小时 ✓"
     else
       warn "launchd plist 未找到, 需要手动配置"
     fi
     ;;
   linux)
-    HARVEST_SCRIPT="$VAULT/modules/harvest/run.sh"
-    CRON_LINE="*/30 * * * * MEMORY_VAULT=$VAULT VAULT_ROOT=$VAULT MODULE_DIR=$VAULT/modules/harvest PATH=/usr/local/bin:\$PATH /bin/bash $HARVEST_SCRIPT >> /tmp/memory-harvest.log 2>&1"
+    if [ "$run_mode" = "4" ]; then
+      HARVEST_SCRIPT="$VAULT/modules/local-daemon/run.sh"
+    else
+      HARVEST_SCRIPT="$VAULT/modules/harvest/run.sh"
+    fi
+    CRON_LINE="0 */3 * * * MEMORY_VAULT=$VAULT VAULT_ROOT=$VAULT MODULE_DIR=\$(dirname \$HARVEST_SCRIPT) PATH=/usr/local/bin:\$PATH /bin/bash \$HARVEST_SCRIPT >> /tmp/memory-harvest.log 2>&1"
     (crontab -l 2>/dev/null | grep -v "memory-harvest"; echo "$CRON_LINE") | crontab -
-    info "cron: 每 30 分钟 ✓"
+    info "cron: 每 3 小时 ✓"
     ;;
   termux)
     if command -v crond &>/dev/null || pkg install -y cronie 2>/dev/null; then
-      HARVEST_SCRIPT="$VAULT/scripts/harvest-termux.sh"
-      [ -f "$HARVEST_SCRIPT" ] || HARVEST_SCRIPT="$VAULT/modules/harvest/run.sh"
-      CRON_LINE="*/30 * * * * MEMORY_VAULT=$VAULT /bin/bash $HARVEST_SCRIPT >> $HOME/memory-harvest.log 2>&1"
+      if [ "$run_mode" = "4" ]; then
+        HARVEST_SCRIPT="$VAULT/modules/local-daemon/run.sh"
+      else
+        HARVEST_SCRIPT="$VAULT/scripts/harvest-termux.sh"
+        [ -f "$HARVEST_SCRIPT" ] || HARVEST_SCRIPT="$VAULT/modules/harvest/run.sh"
+      fi
+      CRON_LINE="0 */3 * * * MEMORY_VAULT=$VAULT VAULT_ROOT=$VAULT /bin/bash \$HARVEST_SCRIPT >> \$HOME/memory-harvest.log 2>&1"
       (crontab -l 2>/dev/null | grep -v "memory-harvest"; echo "$CRON_LINE") | crontab -
       crond 2>/dev/null || true
-      info "cronie: 每 30 分钟 ✓"
+      info "cronie: 每 3 小时 ✓"
       warn "每次重启 Termux 后需运行: crond"
     else
-      warn "cronie 安装失败, 需手动收割: bash $VAULT/modules/harvest/run.sh"
+      warn "cronie 安装失败, 需手动收割"
     fi
     ;;
 esac
@@ -484,7 +545,7 @@ echo ""
 echo "  Vault:    $VAULT"
 echo "  Machine:  $MACHINE ($PLATFORM)"
 echo "  GitLab:   $GITLAB_URL"
-echo "  Schedule: 每 30 分钟自动收割"
+echo "  Schedule: 每 3 小时自动收割"
 echo ""
 
 # 检测到哪些工具

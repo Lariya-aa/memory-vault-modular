@@ -17,7 +17,7 @@ Memory Vault automatically harvests memory and conversations from all AI tools, 
 ```
 Mac A (Claude/Gemini/Antigravity)     Mac B (Claude/Gemini/Codex)
          ↓ harvest                              ↓ harvest
-         ↓ (Auto every 30 mins)                  ↓
+         ↓ (Auto every 3 hours)                  ↓
     ┌────────────────────────────────────────────────┐
     │           GitLab (memory-vault repo)           │
     │                     ↓ CI                       │
@@ -45,8 +45,8 @@ Mac A (Claude/Gemini/Antigravity)     Mac B (Claude/Gemini/Codex)
 
 | Platform | Deployment | Scheduler |
 |---|---|---|
-| macOS | `bash wizard.sh` | launchd (Every 30 mins) |
-| Linux (Ubuntu/Debian) | `bash wizard.sh` | cron (Every 30 mins) |
+| macOS | `bash wizard.sh` | launchd (Every 3 hours) |
+| Linux (Ubuntu/Debian) | `bash wizard.sh` | cron (Every 3 hours) |
 | Android (Termux) | `bash core/termux-setup.sh` | cronie / Manual |
 | Windows | WSL2 (Same as Linux) | cron in WSL |
 
@@ -126,7 +126,7 @@ bash wizard.sh
 The wizard will safely `rsync` the core logic into your final deployment repository, strictly bypassing and protecting your environment JSON configs, private memory corpus, and deployment CI pipelines.
 
 ## Documentation
-- [DEPLOY.md](DEPLOY.md) — Deployment guide (Mac/Ubuntu/Debian/Termux/Windows)
+- [DEPLOY_en.md](DEPLOY_en.md) — Deployment guide (Mac/Ubuntu/Debian/Termux/Windows)
 - [CHANGELOG.md](CHANGELOG.md) — Version updates
 
 ## Dependencies

@@ -12,9 +12,9 @@
     <string>/Users/yaya/memory-vault/scripts/harvest.sh</string>
   </array>
 
-  <!-- 每 1800 秒 (30 分钟) 运行一次 -->
+  <!-- 每 10800 秒 (3 小时) 运行一次 -->
   <key>StartInterval</key>
-  <integer>1800</integer>
+  <integer>10800</integer>
 
   <!-- 开机后立即运行一次 -->
   <key>RunAtLoad</key>

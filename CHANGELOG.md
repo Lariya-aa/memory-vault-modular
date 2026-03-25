@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-03-25
+
+### Added
+- **Wizard Option [3] Local Pipeline Run**: Bypasses 60-minute CI timeout limits to rapidly execute the L0-L3 distillation pipeline locally, ideal for heavy first-time history merges.
+- **Wizard Option [4] Local Daemon Mode**: Pure offline automated distillation architecture. Deploys a background daemon utilizing `flock` kernel mutexes to prevent race conditions on macOS/Linux.
+- **Internationalization**: Created full English deployment documentation (`DEPLOY_en.md`).
+
+### Changed
+- **Global Scheduled Interval Shifted**: Reduced the default frequency for launchd triggers and cron jobs from `every 30 minutes` to `every 3 hours` (`10800` seconds / `0 */3 * * *`), drastically reducing token burn and OS scheduling overhead.
+- **Documentation**: Modernized both READMEs with 100% Vibe Coding badges and synchronized interval specs.
+
 ## [0.3.0] - 2026-03-22
 
 ### Added

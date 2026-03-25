@@ -17,7 +17,7 @@ Memory Vault 自动收割所有 AI 工具的记忆和对话，蒸馏提纯后回
 ```
 Mac A (Claude/Gemini/Antigravity)     Mac B (Claude/Gemini/Codex)
          ↓ harvest                              ↓ harvest
-         ↓ (每30分钟自动)                        ↓
+         ↓ (每3小时自动)                        ↓
     ┌────────────────────────────────────────────────┐
     │              GitLab (memory-vault repo)         │
     │                     ↓ CI                        │
@@ -43,8 +43,8 @@ Mac A (Claude/Gemini/Antigravity)     Mac B (Claude/Gemini/Codex)
 
 | 平台 | 部署方式 | 定时任务 |
 |---|---|---|
-| macOS | `bash wizard.sh` | launchd (每30分钟) |
-| Linux (Ubuntu/Debian) | `bash wizard.sh` | cron (每30分钟) |
+| macOS | `bash wizard.sh` | launchd (每3小时) |
+| Linux (Ubuntu/Debian) | `bash wizard.sh` | cron (每3小时) |
 | Android (Termux) | `bash core/termux-setup.sh` | cronie / 手动 |
 | Windows | WSL2 (按 Linux 部署) | cron in WSL |
 
@@ -201,7 +201,7 @@ memory-vault-modular/
 │                                            gc [days]      清理过期数据
 │
 ├── launchd/                               macOS 定时任务
-│   └── com.user.memory-harvest.plist      每 30 分钟执行 harvest
+│   └── com.user.memory-harvest.plist      每 3 小时执行 harvest
 │
 └── 运行时生成的目录 (仅在 ~/memory-vault 中):
     ├── raw/{tool}/{machine}/{project}/    原始记忆文件快照

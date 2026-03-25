@@ -26,6 +26,19 @@
 
 ---
 
+## 核心管控向导 (Wizard.sh)
+
+Memory Vault 拥有一套极致解耦的全局控制终端 `wizard.sh`。不论网络环境和宿主机 OS 如何，您只需运行 `bash wizard.sh`，即可从以下 4 种底层控制流中自由切换：
+
+| 选项 | 模式指令 | 适用场景与底层调度行为 |
+|:---:|---|---|
+| **[1]** | **全新安装 / 完整修复**<br>*(Deploy & Repair)* | **经典云端 CI 模式**。适用于初始化任何机器节点。向导会配置全局环境变量，并在系统级（launchd/cron）注入每 3 小时调用 `harvest` 的定时动作。机器只管收集发向远端，繁重的 LLM 提纯由 GitLab 云端计算。 |
+| **[2]** | **仅同步更新代码**<br>*(Source Code Sync)* | **增量热更新**。当您在模块库开发了新的框架特性后选用此项。底层通过精密的 `rsync` 黑白名单，将核心逻辑直接刷入私有运行库，完美避开环境配置、个人 JSON 及记忆私有数据，防止错误覆写。 |
+| **[3]** | **本地跑满蒸馏管线**<br>*(Local Pipeline Run)* | **单次破冰战**。由于各大 AI 原生工具累计的历史记录极度庞大，首次收割必然长达几千字。此模式强力接管本机全部算力连贯执行 L0~L3，绕过各类公用免费 CI 平台的 60分钟 Timeout 断网限制，极速完成首航结晶。 |
+| **[4]** | **纯本地断网挂机版**<br>*(Local Daemon Mode)* | **无需任何云服务器的后台全自动引擎**。选定后，向导会将本机的长持定时任务改为指向 `local-daemon`。本地机器将变为兼具“收割器+蒸馏炉”的永动双核机器。每 3 小时触发基于 `flock` 文件锁防冲突的全景断网合并。 |
+
+---
+
 ## Mac 部署
 
 > 适用于: 两台 Mac (Claude CLI / Gemini CLI / Antigravity / Codex CLI)
@@ -52,7 +65,7 @@ setup.sh 会自动:
 - 配置 jj 用户信息 (`memory-vault@{hostname}`)
 - clone 或 init 仓库到 `~/memory-vault`
 - 注册本机所有 git 项目到 `projects.json`
-- 安装 launchd 定时任务 (每30分钟)
+- 安装 launchd 定时任务 (每3小时)
 - 执行首次收割
 
 ### 3. 验证定时任务
@@ -218,7 +231,7 @@ sudo apt-get install -y cron
 # 设置定时任务
 VAULT=~/memory-vault
 (crontab -l 2>/dev/null | grep -v "memory-harvest"; \
- echo "*/30 * * * * MEMORY_VAULT=$VAULT VAULT_ROOT=$VAULT MODULE_DIR=$VAULT/modules/harvest PATH=/usr/local/bin:\$PATH /bin/bash $VAULT/modules/harvest/run.sh >> /tmp/memory-harvest.log 2>&1") | crontab -
+ echo "0 */3 * * * MEMORY_VAULT=$VAULT VAULT_ROOT=$VAULT MODULE_DIR=$VAULT/modules/harvest PATH=/usr/local/bin:\$PATH /bin/bash $VAULT/modules/harvest/run.sh >> /tmp/memory-harvest.log 2>&1") | crontab -
 
 # 验证
 crontab -l
@@ -294,7 +307,7 @@ echo 'pgrep crond >/dev/null || crond' >> ~/.bashrc
 
 # 方式2: termux-job-scheduler (需要 Termux:API app)
 pkg install termux-api
-termux-job-scheduler --job-id 1 --period-ms 1800000 \
+termux-job-scheduler --job-id 1 --period-ms 10800000 \
   --script "$HOME/memory-vault/scripts/harvest-termux.sh"
 
 # 方式3: 每次打开 Termux 手动跑
@@ -307,7 +320,7 @@ bash ~/memory-vault/scripts/harvest-termux.sh
 |---|---|
 | **jj 编译** | 在手机上编译 Rust 可能需要 10-20 分钟且占用大量内存, 编译失败会自动降级到 git |
 | **后台运行** | Android 会杀后台进程, Termux 需要开启通知栏常驻 (Termux 设置 → Acquire wake lock) |
-| **电池** | 每 30 分钟收割对电量影响很小, 主要是 git push 的网络请求 |
+| **电池** | 每 3 小时收割对电量影响很小, 主要是 git push 的网络请求 |
 | **存储** | conversations/ 归档会占空间, 定期在 Mac 上运行 `jj-admin.sh gc` |
 | **网络** | 手机在局域网2 WiFi 时走 Surge, 用移动数据时需要确保能访问 GitLab (DDNS) |
 | **仅收割 Gemini** | Termux 版只收割 Gemini CLI 记忆和对话, 不收其他工具 |
@@ -363,7 +376,7 @@ jj git clone --colocate git@gitlab.your-ddns.com:user/memory-vault.git ~/memory-
 
 # 4. 定时任务: 用 Task Scheduler
 # 操作: "C:\Program Files\Git\bin\bash.exe" -c "cd ~/memory-vault && bash modules/harvest/run.sh"
-# 触发: 每30分钟
+# 触发: 每3小时
 ```
 
 **Windows 注意事项**:
@@ -387,7 +400,7 @@ jj git clone --colocate git@gitlab.your-ddns.com:user/memory-vault.git ~/memory-
 本机已部署 memory-vault 跨工具记忆同步系统。
 
 ### 你应该知道的:
-- 你的记忆文件 (`~/.claude/memory/`) 每30分钟自动同步到 memory-vault
+- 你的记忆文件 (`~/.claude/memory/`) 每3小时自动同步到 memory-vault
 - 其他工具 (Gemini/Antigravity/OpenClaw/Codex) 的蒸馏知识会自动出现在
   `~/.claude/memory/cross_tool_context.md` 中
 - 按项目的跨工具知识会出现在对应项目的 memory 目录中
@@ -537,7 +550,7 @@ jj log --limit 5
 # 1. 用 Claude 在某个项目里写一条 memory
 #    (Claude 会话中说 "记住: 这个项目用 JWT 做认证")
 
-# 2. 等待30分钟 (或手动触发 harvest)
+# 2. 等待3小时 (或手动触发 harvest)
 
 # 3. 在 GitLab 手动触发 Pipeline
 
