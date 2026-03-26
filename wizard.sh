@@ -457,7 +457,7 @@ case "$PLATFORM" in
     else
       HARVEST_SCRIPT="$VAULT/modules/harvest/run.sh"
     fi
-    CRON_LINE="0 */3 * * * MEMORY_VAULT=$VAULT VAULT_ROOT=$VAULT MODULE_DIR=\$(dirname \$HARVEST_SCRIPT) PATH=/usr/local/bin:\$PATH /bin/bash \$HARVEST_SCRIPT >> /tmp/memory-harvest.log 2>&1"
+    CRON_LINE="0 */3 * * * MEMORY_VAULT=$VAULT VAULT_ROOT=$VAULT MODULE_DIR=\$(dirname \$HARVEST_SCRIPT) PATH=/usr/local/bin:\$PATH flock -n /tmp/memory-harvest.lock /bin/bash \$HARVEST_SCRIPT >> /tmp/memory-harvest.log 2>&1"
     (crontab -l 2>/dev/null | grep -v "memory-harvest"; echo "$CRON_LINE") | crontab -
     info "cron: 每 3 小时 ✓"
     ;;
@@ -469,7 +469,7 @@ case "$PLATFORM" in
         HARVEST_SCRIPT="$VAULT/scripts/harvest-termux.sh"
         [ -f "$HARVEST_SCRIPT" ] || HARVEST_SCRIPT="$VAULT/modules/harvest/run.sh"
       fi
-      CRON_LINE="0 */3 * * * MEMORY_VAULT=$VAULT VAULT_ROOT=$VAULT /bin/bash \$HARVEST_SCRIPT >> \$HOME/memory-harvest.log 2>&1"
+      CRON_LINE="0 */3 * * * MEMORY_VAULT=$VAULT VAULT_ROOT=$VAULT flock -n \$HOME/memory-harvest.lock /bin/bash \$HARVEST_SCRIPT >> \$HOME/memory-harvest.log 2>&1"
       (crontab -l 2>/dev/null | grep -v "memory-harvest"; echo "$CRON_LINE") | crontab -
       crond 2>/dev/null || true
       info "cronie: 每 3 小时 ✓"

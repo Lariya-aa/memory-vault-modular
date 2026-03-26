@@ -13,6 +13,10 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - **Global Scheduled Interval Shifted**: Reduced the default frequency for launchd triggers and cron jobs from `every 30 minutes` to `every 3 hours` (`10800` seconds / `0 */3 * * *`), drastically reducing token burn and OS scheduling overhead.
 - **Documentation**: Modernized both READMEs with 100% Vibe Coding badges and synchronized interval specs.
+- **L0 Distillation Logic Upgrade**: Externalized the LLM extraction prompt into a modular template (`configs/_templates/distill-l0-prompt.md`). The prompt now explicitly captures 'rejected' choices, infers implicit context, and encapsulates the payload in backticks to prevent prompt injection.
+- **Wizard Pipeline Integrity**: Deployment options [1] and [2] now ensure the `wizard.sh` executable and global markdown docs are completely copied over to the active `~/memory-vault`.
+- **Cron Concurrency Mutex**: Injected native `flock -n` locks into Termux & Debian cron scheduling to structurally prevent pipeline collision overlaps.
+- **Cross-Machine Idempotency**: Fixed a critical L0 flaw where `distill.sh` would re-process files natively synced from neighboring nodes (e.g. over NAS / iCloud). It now structurally checks the existence of `_distilled/` JSON outputs across the multi-agent LAN fleet before firing Gemini CLI calls.
 
 ## [0.3.0] - 2026-03-22
 

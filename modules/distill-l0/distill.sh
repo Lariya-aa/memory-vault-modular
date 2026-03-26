@@ -35,38 +35,18 @@ for session_file in "$LATEST_L0"/*.md; do
   echo "  Distilling: $filename ($CHAR_COUNT chars)"
   CONVERSATION=$(cat "$session_file")
 
-  RESULT=$(gemini -p "$(cat <<PROMPT
-你是一个精准的知识提取引擎。从 AI 工具对话中提取**长期可复用**的知识。
+  PROMPT_FILE="$VAULT_ROOT/configs/_templates/distill-l0-prompt.md"
+  if [ -f "$PROMPT_FILE" ]; then
+    BASE_PROMPT=$(cat "$PROMPT_FILE")
+  else
+    BASE_PROMPT="提取长效知识，输出 JSON 数组。"
+  fi
 
-对话内容:
+  RESULT=$(gemini -p "$BASE_PROMPT
+\`\`\`markdown
 $CONVERSATION
-
-## 提取什么 (YES)
-- **decision**: 用户明确做出的技术/架构选择 (如 "用 PostgreSQL 而非 MySQL")
-- **preference**: 用户表达的偏好/习惯 (如 "不喜欢 TailwindCSS")
-- **convention**: 确立的约定/规范 (如 "API 路由统一 /api/v1")
-- **knowledge**: 非显而易见的事实 (如 "Node.js 22 的 fetch 忽略 HTTPS_PROXY")
-- **todo**: 明确提到但未完成的任务
-- **solution**: 经排错确认有效的最终解决方案
-
-## 绝对不提取 (NO)
-- 中间调试过程和失败尝试
-- AI 的工具调用/文件读取/命令执行细节
-- 代码具体实现 (属于版本控制)
-- "用户问了 X"/"AI 回答了 Y" 流水账
-- 已被否定/推翻的结论
-- 通用常识 (如 "Python 用 pip 安装包")
-
-## 质量门槛
-提取前自问: "6 个月后换一个 AI 工具,这条信息还有用吗?" 否则不提取。
-每条 content 不超过 100 字。宁少勿多,一个对话提取 0-5 条。
-
-输出 JSON 数组 (无 Markdown 代码块):
-[{"type": "decision", "content": "简洁内容 (≤100字)", "context": "原因", "scope": "global 或项目名", "confidence": "confirmed/tentative"}]
-
-无可提取知识则输出: []
-PROMPT
-)" 2>/dev/null || echo "[]")
+\`\`\`
+" 2>/dev/null || echo "[]")
 
   if echo "$RESULT" | python3 -c "import json,sys; json.load(sys.stdin)" 2>/dev/null; then
     echo "$RESULT" > "$DISTILLED_DIR/$filename.json"
